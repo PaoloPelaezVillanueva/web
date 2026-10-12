@@ -177,6 +177,9 @@ erDiagram
 | GET | `/api/reportes/{gestiones\|pagos\|promesas}` | Sup. / Admin | Reportes |
 | GET · POST · PUT | `/api/usuarios` | Sup. / Admin | Listar, crear, editar |
 | PATCH | `/api/usuarios/{id}/estado` · `/password` | Sup. / Admin | Activar/desactivar · restablecer contraseña |
+| POST | `/api/clientes` | Admin | Crear cliente (sin cuentas; documento único) |
+| PUT | `/api/clientes/{id}` | Quien ve al cliente | Actualizar nombre, correo y dirección |
+| DELETE | `/api/clientes/{id}` | Admin | Eliminar cliente (solo si no tiene cuentas) |
 | GET · POST · PUT · DELETE | `/api/admin/tipificaciones[/n1\|/n2]` | Admin | Árbol de tipificaciones (DELETE desactiva) |
 | POST | `/api/admin/integracion/asignaciones` · `/pagos` | Admin | Cargar CSV |
 | GET | `/api/admin/integracion/cargas` | Admin | Historial de cargas |
@@ -215,4 +218,12 @@ cd backend
 ./mvnw test
 ```
 
-[`CrmCobranzasApplicationTests`](backend/src/test/java/com/escall/crm/CrmCobranzasApplicationTests.java) verifica: login (RF01), permisos por rol (RNF05, RF14), que el asesor solo vea su cartera (RF03–RF04), la gestión con promesa y el pago que la cumple (RF07, RF08, RF20, RF21), la carga de asignaciones con validación (RF19, RF21), que el supervisor solo administre su equipo, con auditoría (RF16, RF23), y que las tipificaciones se desactivan sin borrarse (RF22).
+[`CrmCobranzasApplicationTests`](backend/src/test/java/com/escall/crm/CrmCobranzasApplicationTests.java) verifica: login (RF01), permisos por rol (RNF05, RF14), que el asesor solo vea su cartera (RF03–RF04), la gestión con promesa y el pago que la cumple (RF07, RF08, RF20, RF21), la carga de asignaciones con validación (RF19, RF21), que el supervisor solo administre su equipo, con auditoría (RF16, RF23), que las tipificaciones se desactivan sin borrarse (RF22), las reglas del CRUD de clientes y que una carga sin archivo responda 400.
+
+La colección de Postman se corre con newman (34 peticiones, cada una con aserción de código HTTP):
+
+```bash
+npx newman run docs/CRM-Cobranzas.postman_collection.json --env-var base_url=http://localhost:8080 --working-dir docs
+```
+
+El último reporte está en [`docs/avance-2/postman-resultados.txt`](docs/avance-2/postman-resultados.txt).
