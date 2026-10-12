@@ -152,7 +152,18 @@
             "header": [],
             "url": "{{base_url}}/api/auth/yo",
             "description": ""
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Cerrar sesión",
@@ -161,7 +172,18 @@
             "header": [],
             "url": "{{base_url}}/api/auth/logout",
             "description": "RF02"
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -175,16 +197,38 @@
             "header": [],
             "url": "{{base_url}}/api/clientes?q=45879632",
             "description": "RF03: documento, número de operación o nombre"
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Detalle del cliente",
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{base_url}}/api/clientes/1",
+            "url": "{{base_url}}/api/clientes/7",
             "description": "RF04 - RF06"
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Árbol de tipificaciones activas",
@@ -193,7 +237,18 @@
             "header": [],
             "url": "{{base_url}}/api/tipificaciones",
             "description": "RF09"
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Registrar gestión con promesa (asesor)",
@@ -208,7 +263,7 @@
             "url": "{{base_url}}/api/gestiones",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"cuentaId\": 1,\n  \"telefono\": \"987654321\",\n  \"tipificacionN2Id\": 1,\n  \"observacion\": \"Cliente acepta pagar\",\n  \"fechaCompromiso\": \"2026-10-10\",\n  \"montoCompromiso\": 250\n}",
+              "raw": "{\n  \"cuentaId\": 9,\n  \"telefono\": \"987654321\",\n  \"tipificacionN2Id\": 1,\n  \"observacion\": \"Cliente acepta pagar\",\n  \"fechaCompromiso\": \"2026-10-25\",\n  \"montoCompromiso\": 250\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -216,7 +271,18 @@
               }
             },
             "description": "RF07 - RF08. Usa una cuenta de la cartera del asesor que inició sesión."
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Mi cartera (asesor)",
@@ -225,7 +291,18 @@
             "header": [],
             "url": "{{base_url}}/api/cartera",
             "description": ""
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Mi agenda de promesas (asesor)",
@@ -234,7 +311,18 @@
             "header": [],
             "url": "{{base_url}}/api/cartera/agenda",
             "description": ""
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -242,13 +330,63 @@
       "name": "3. Dashboard y Reportes",
       "item": [
         {
+          "name": "Login como Administrador (para módulos de administración)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario\": \"admin\",\n  \"password\": \"Admin12345\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "RF01. Guarda el token en la variable {{token}}."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "pm.test(\"Login correcto\", () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set(\"token\", r.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Dashboard del mes",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{base_url}}/api/dashboard?periodo=MES",
             "description": "RF10 - RF12. periodo = HOY | SEMANA | MES, o desde/hasta"
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Dashboard por rango y asesor",
@@ -257,7 +395,18 @@
             "header": [],
             "url": "{{base_url}}/api/dashboard?desde=2026-10-01&hasta=2026-10-06&asesorId=4",
             "description": ""
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Opciones de filtro",
@@ -266,7 +415,18 @@
             "header": [],
             "url": "{{base_url}}/api/filtros",
             "description": ""
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Reporte de gestiones",
@@ -275,7 +435,18 @@
             "header": [],
             "url": "{{base_url}}/api/reportes/gestiones?periodo=SEMANA",
             "description": "RF13"
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Reporte de pagos",
@@ -284,7 +455,18 @@
             "header": [],
             "url": "{{base_url}}/api/reportes/pagos?periodo=MES",
             "description": ""
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Reporte de promesas",
@@ -293,7 +475,18 @@
             "header": [],
             "url": "{{base_url}}/api/reportes/promesas?periodo=MES",
             "description": ""
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -307,7 +500,18 @@
             "header": [],
             "url": "{{base_url}}/api/usuarios",
             "description": "RF16 (supervisor: su equipo) / RF17 (admin: todos)"
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Crear asesor",
@@ -330,7 +534,18 @@
               }
             },
             "description": ""
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Desactivar usuario",
@@ -353,7 +568,18 @@
               }
             },
             "description": ""
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Restablecer contraseña",
@@ -376,7 +602,18 @@
               }
             },
             "description": ""
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Árbol completo (admin)",
@@ -385,7 +622,18 @@
             "header": [],
             "url": "{{base_url}}/api/admin/tipificaciones",
             "description": "RF22"
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Crear resultado de nivel 2",
@@ -408,7 +656,18 @@
               }
             },
             "description": ""
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Auditoría",
@@ -417,7 +676,18 @@
             "header": [],
             "url": "{{base_url}}/api/admin/auditoria?pagina=0&tamano=50",
             "description": "RF23"
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -441,7 +711,18 @@
               ]
             },
             "description": "RF19 y RF21. Elige el archivo docs/plantilla-asignaciones.csv"
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Cargar pagos (CSV)",
@@ -460,7 +741,18 @@
               ]
             },
             "description": "RF20 y RF21. Elige el archivo docs/plantilla-pagos.csv"
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Historial de cargas",
@@ -469,7 +761,192 @@
             "header": [],
             "url": "{{base_url}}/api/admin/integracion/cargas",
             "description": ""
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. CRUD de clientes (admin)",
+      "item": [
+        {
+          "name": "Crear cliente (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/clientes",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documento\": \"70808080\",\n  \"nombres\": \"Cliente Postman\",\n  \"email\": \"postman@escall.pe\",\n  \"direccion\": \"Av. Demo 100\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"cliente_crud_id\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear cliente con documento repetido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/clientes",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documento\": \"70808080\",\n  \"nombres\": \"Cliente Postman\",\n  \"email\": \"postman@escall.pe\",\n  \"direccion\": \"Av. Demo 100\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 409\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Editar cliente",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/clientes/{{cliente_crud_id}}",
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombres\": \"Cliente Postman Editado\",\n  \"email\": \"postman@escall.pe\",\n  \"direccion\": \"Av. Demo 200\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar cliente con cuentas (debe fallar)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{base_url}}/api/clientes/7",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 409\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar cliente sin cuentas",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{base_url}}/api/clientes/{{cliente_crud_id}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar cliente eliminado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/clientes/{{cliente_crud_id}}",
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
         }
       ]
     }

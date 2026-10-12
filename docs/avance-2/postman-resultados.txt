@@ -1,0 +1,168 @@
+Resultados de la colección Postman (newman) contra el backend en perfil demo (H2)
+Fecha: 2026-10-12 · Comando: newman run docs/CRM-Cobranzas.postman_collection.json --env-var base_url=http://localhost:8080 --working-dir docs
+
+newman
+
+CRM Cobranzas - ESCALL PERÚ
+
+□ 1. Login
+└ Login como Administrador (admin)
+  POST http://localhost:8080/api/auth/login [200 OK, 924B, 456ms]
+  √  Login correcto
+
+└ Login como Supervisor (sgarcia)
+  POST http://localhost:8080/api/auth/login [200 OK, 917B, 86ms]
+  √  Login correcto
+
+└ Login como Asesor (asesor1)
+  POST http://localhost:8080/api/auth/login [200 OK, 914B, 87ms]
+  √  Login correcto
+
+└ Usuario actual
+  GET http://localhost:8080/api/auth/yo [200 OK, 626B, 31ms]
+  √  Responde 200
+
+└ Cerrar sesión
+  POST http://localhost:8080/api/auth/logout [204 No Content, 377B, 11ms]
+  √  Responde 204
+
+□ 2. Resumen y Gestiones
+└ Buscar cliente
+  GET http://localhost:8080/api/clientes?q=45879632 [200 OK, 422B, 50ms]
+  √  Responde 200
+
+└ Detalle del cliente
+  GET http://localhost:8080/api/clientes/7 [200 OK, 4.25kB, 110ms]
+  √  Responde 200
+
+└ Árbol de tipificaciones activas
+  GET http://localhost:8080/api/tipificaciones [200 OK, 2.27kB, 16ms]
+  √  Responde 200
+
+└ Registrar gestión con promesa (asesor)
+  POST http://localhost:8080/api/gestiones [201 Created, 802B, 91ms]
+  √  Responde 201
+
+└ Mi cartera (asesor)
+  GET http://localhost:8080/api/cartera [200 OK, 2.2kB, 28ms]
+  √  Responde 200
+
+└ Mi agenda de promesas (asesor)
+  GET http://localhost:8080/api/cartera/agenda [200 OK, 1.06kB, 17ms]
+  √  Responde 200
+
+□ 3. Dashboard y Reportes
+└ Login como Administrador (para módulos de administración)
+  POST http://localhost:8080/api/auth/login [200 OK, 924B, 83ms]
+  √  Login correcto
+
+└ Dashboard del mes
+  GET http://localhost:8080/api/dashboard?periodo=MES [200 OK, 2.45kB, 103ms]
+  √  Responde 200
+
+└ Dashboard por rango y asesor
+  GET http://localhost:8080/api/dashboard?desde=2026-10-01&hasta=2026-10-06&asesorId=4 [200 OK, 1.46kB, 43ms]
+  √  Responde 200
+
+└ Opciones de filtro
+  GET http://localhost:8080/api/filtros [200 OK, 673B, 27ms]
+  √  Responde 200
+
+└ Reporte de gestiones
+  GET http://localhost:8080/api/reportes/gestiones?periodo=SEMANA [200 OK, 3.74kB, 21ms]
+  √  Responde 200
+
+└ Reporte de pagos
+  GET http://localhost:8080/api/reportes/pagos?periodo=MES [200 OK, 1.77kB, 17ms]
+  √  Responde 200
+
+└ Reporte de promesas
+  GET http://localhost:8080/api/reportes/promesas?periodo=MES [200 OK, 4.52kB, 21ms]
+  √  Responde 200
+
+□ 4. Administración
+└ Listar usuarios
+  GET http://localhost:8080/api/usuarios [200 OK, 1.64kB, 17ms]
+  √  Responde 200
+
+└ Crear asesor
+  POST http://localhost:8080/api/usuarios [201 Created, 633B, 102ms]
+  √  Responde 201
+
+└ Desactivar usuario
+  PATCH http://localhost:8080/api/usuarios/5/estado [200 OK, 627B, 17ms]
+  √  Responde 200
+
+└ Restablecer contraseña
+  PATCH http://localhost:8080/api/usuarios/5/password [204 No Content, 377B, 81ms]
+  √  Responde 204
+
+└ Árbol completo (admin)
+  GET http://localhost:8080/api/admin/tipificaciones [200 OK, 2.27kB, 12ms]
+  √  Responde 200
+
+└ Crear resultado de nivel 2
+  POST http://localhost:8080/api/admin/tipificaciones/n2 [201 Created, 518B, 19ms]
+  √  Responde 201
+
+└ Auditoría
+  GET http://localhost:8080/api/admin/auditoria?pagina=0&tamano=50 [200 OK, 1.78kB, 15ms]
+  √  Responde 200
+
+□ 5. Integración de Datos (admin)
+└ Cargar asignaciones (CSV)
+[200 OK, 688B, 50ms]
+  √  Responde 200
+
+└ Cargar pagos (CSV)
+  POST http://localhost:8080/api/admin/integracion/pagos [200 OK, 659B, 27ms]
+  √  Responde 200
+
+└ Historial de cargas
+  GET http://localhost:8080/api/admin/integracion/cargas [200 OK, 922B, 9ms]
+  √  Responde 200
+
+□ 6. CRUD de clientes (admin)
+└ Crear cliente (admin)
+  POST http://localhost:8080/api/clientes [201 Created, 632B, 37ms]
+  √  Responde 201
+
+└ Crear cliente con documento repetido
+  POST http://localhost:8080/api/clientes [409 Conflict, 551B, 20ms]
+  √  Responde 409
+
+└ Editar cliente
+  PUT http://localhost:8080/api/clientes/13 [200 OK, 635B, 24ms]
+  √  Responde 200
+
+└ Eliminar cliente con cuentas (debe fallar)
+  DELETE http://localhost:8080/api/clientes/7 [409 Conflict, 574B, 10ms]
+  √  Responde 409
+
+└ Eliminar cliente sin cuentas
+  DELETE http://localhost:8080/api/clientes/13 [204 No Content, 377B, 17ms]
+  √  Responde 204
+
+└ Consultar cliente eliminado
+  GET http://localhost:8080/api/clientes/13 [404 Not Found, 538B, 5ms]
+  √  Responde 404
+
+┌─────────────────────────┬───────────────────┬──────────────────┐
+│                         │          executed │           failed │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              iterations │                 1 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│                requests │                34 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│            test-scripts │                34 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│      prerequest-scripts │                 0 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              assertions │                34 │                0 │
+├─────────────────────────┴───────────────────┴──────────────────┤
+│ total run duration: 4.5s                                       │
+├────────────────────────────────────────────────────────────────┤
+│ total data received: 29.42kB (approx)                          │
+├────────────────────────────────────────────────────────────────┤
+│ average response time: 51ms [min: 5ms, max: 456ms, s.d.: 77ms] │
+└────────────────────────────────────────────────────────────────┘
