@@ -1,0 +1,3 @@
+documento;tipo_documento;nombres;telefono;email;direccion;numero_operacion;entidad;producto;cartera;cosecha;deuda;dias_mora;asesor
+45879632;DNI;Juan Carlos Pérez Díaz;987654321;juan.perez@correo.com;Av. Arequipa 1234, Lima;OP-500001;Banco Andino;Tarjeta de crédito;Banco Andino - Tarjetas;2026-10;3500.00;60;asesor1
+41236587;DNI;María Elena Flores Ramos;912345678;;San Isidro, Lima;OP-500002;Financiera Sol;Préstamo personal;Financiera Sol - Consumo;2026-10;1800.50;95;asesor2

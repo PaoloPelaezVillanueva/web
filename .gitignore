@@ -1,0 +1,21 @@
+# Secretos: nunca subir credenciales
+.env
+*.env
+!.env.example
+
+# Dependencias y compilados
+node_modules/
+dist/
+target/
+.angular/
+
+# IDEs y sistema
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.iml
+.DS_Store
+Thumbs.db
+
+# Frontend Angular: no se sube en el Avance 2 (se incluye en el Avance 3)
+frontend/
