@@ -32,6 +32,7 @@ public class AdministracionController {
     }
 
     @PostMapping("/tipificaciones/n1")
+    @ResponseStatus(HttpStatus.CREATED)
     public TipificacionDto crearN1(@Valid @RequestBody TipificacionN1Request req) {
         return tipificaciones.guardarN1(null, req);
     }
@@ -42,6 +43,7 @@ public class AdministracionController {
     }
 
     @PostMapping("/tipificaciones/n2")
+    @ResponseStatus(HttpStatus.CREATED)
     public TipificacionDto.Resultado crearN2(@Valid @RequestBody TipificacionN2Request req) {
         return tipificaciones.guardarN2(null, req);
     }

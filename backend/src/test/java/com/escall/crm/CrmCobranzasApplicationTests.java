@@ -199,6 +199,58 @@ class CrmCobranzasApplicationTests {
         assertThat(visibles).isEmpty();
     }
 
+    @Test
+    void crudClientes_rolesAlcanceYReglas() throws Exception {
+        String admin = login("admin", "Admin12345");
+        String asesor1 = login("asesor1", CLAVE_DEMO);
+        String asesor3 = login("asesor3", CLAVE_DEMO);
+        String nuevo = "{\"documento\":\"70707070\",\"nombres\":\"Cliente CRUD\",\"email\":\"crud@escall.pe\",\"direccion\":\"Av. Prueba 123\"}";
+
+        // Crear: solo el administrador
+        mvc.perform(post("/api/clientes").header("Authorization", bearer(asesor1)).contentType(MediaType.APPLICATION_JSON).content(nuevo))
+                .andExpect(status().isForbidden());
+        String creado = mvc.perform(post("/api/clientes").header("Authorization", bearer(admin)).contentType(MediaType.APPLICATION_JSON).content(nuevo))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.documento").value("70707070"))
+                .andReturn().getResponse().getContentAsString();
+        Integer id = JsonPath.read(creado, "$.id");
+        mvc.perform(post("/api/clientes").header("Authorization", bearer(admin)).contentType(MediaType.APPLICATION_JSON).content(nuevo))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.mensaje").value("Ya existe un cliente con ese documento"));
+
+        // Actualizar: un asesor que no tiene cartera con este cliente no lo ve (404); el administrador sí
+        String cambio = "{\"nombres\":\"Cliente CRUD Editado\",\"email\":\"crud@escall.pe\",\"direccion\":\"Av. Nueva 456\"}";
+        mvc.perform(put("/api/clientes/" + id).header("Authorization", bearer(asesor3)).contentType(MediaType.APPLICATION_JSON).content(cambio))
+                .andExpect(status().isNotFound());
+        mvc.perform(put("/api/clientes/" + id).header("Authorization", bearer(admin)).contentType(MediaType.APPLICATION_JSON).content(cambio))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nombres").value("Cliente CRUD Editado"));
+
+        // Eliminar: no se permite si el cliente tiene cuentas (cliente de la cartera de asesor1)
+        Integer conCuentas = JsonPath.read(getJson("/api/cartera", asesor1), "$[0].clienteId");
+        mvc.perform(delete("/api/clientes/" + conCuentas).header("Authorization", bearer(admin)))
+                .andExpect(status().isConflict());
+
+        // El asesor sí puede corregir el contacto de un cliente de su cartera (conserva el nombre)
+        String nombres = JsonPath.read(getJson("/api/clientes/" + conCuentas, asesor1), "$.nombres");
+        mvc.perform(put("/api/clientes/" + conCuentas).header("Authorization", bearer(asesor1)).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombres\":\"" + nombres + "\",\"email\":null,\"direccion\":\"Dirección actualizada\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.direccion").value("Dirección actualizada"));
+
+        // Eliminar cliente sin cuentas: 204 y luego ya no existe
+        mvc.perform(delete("/api/clientes/" + id).header("Authorization", bearer(admin))).andExpect(status().isNoContent());
+        mvc.perform(get("/api/clientes/" + id).header("Authorization", bearer(admin))).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void rf19_cargaSinArchivoResponde400NoError() throws Exception {
+        String admin = login("admin", "Admin12345");
+        mvc.perform(multipart("/api/admin/integracion/asignaciones").header("Authorization", bearer(admin)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").value(org.hamcrest.Matchers.containsString("adjuntar el archivo")));
+    }
+
     // ------------------------------------------------------------------ utilidades
 
     private String login(String usuario, String password) throws Exception {

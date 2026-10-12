@@ -33,6 +33,7 @@ public class ClienteService {
     private final PromesaRepository promesas;
     private final UsuarioActual usuarioActual;
     private final Reloj reloj;
+    private final AuditoriaService auditoria;
 
     /** RF03: busca por documento, número de operación o nombre. */
     @Transactional(readOnly = true)
@@ -100,7 +101,55 @@ public class ClienteService {
                 .map(p -> PromesaDto.desde(p, reloj.hoy(), true)).toList();
     }
 
+    /** CRUD - Crear (solo administrador). El cliente nace sin cuentas; las cuentas llegan por Integración de Datos. */
+    @Transactional
+    public ClienteDetalleDto crear(ClienteRequest req) {
+        String documento = req.documento().trim();
+        if (clientes.existsByDocumento(documento)) {
+            throw new ReglaNegocioException("Ya existe un cliente con ese documento");
+        }
+        Cliente c = new Cliente();
+        c.setTipoDocumento(limpiar(req.tipoDocumento()) == null ? "DNI" : limpiar(req.tipoDocumento()));
+        c.setDocumento(documento);
+        c.setNombres(req.nombres().trim());
+        c.setEmail(limpiar(req.email()));
+        c.setDireccion(limpiar(req.direccion()));
+        c = clientes.save(c);
+        auditoria.registrar(usuarioActual.obtener().getUsuario(), "CREAR", "Cliente", c.getId(), c.getDocumento());
+        return detalle(c.getId());
+    }
+
+    /** CRUD - Actualizar: corrige datos de contacto. Lo puede hacer quien ya ve al cliente (asesor de su cartera, supervisor de su equipo, administrador). */
+    @Transactional
+    public ClienteDetalleDto actualizar(Long id, ClienteEdicionRequest req) {
+        Cliente c = clientes.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado"));
+        verificarAcceso(id);
+        c.setNombres(req.nombres().trim());
+        c.setEmail(limpiar(req.email()));
+        c.setDireccion(limpiar(req.direccion()));
+        auditoria.registrar(usuarioActual.obtener().getUsuario(), "EDITAR", "Cliente", id, c.getDocumento());
+        return detalle(id);
+    }
+
+    /** CRUD - Eliminar (solo administrador). Solo si no tiene cuentas: así nunca se pierde deuda ni historial. */
+    @Transactional
+    public void eliminar(Long id) {
+        Cliente c = clientes.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado"));
+        if (cuentas.existsByClienteId(id)) {
+            throw new ReglaNegocioException("El cliente tiene cuentas registradas; no se puede eliminar");
+        }
+        String documento = c.getDocumento();
+        clientes.delete(c);
+        auditoria.registrar(usuarioActual.obtener().getUsuario(), "ELIMINAR", "Cliente", id, documento);
+    }
+
     // ---------------------------------------------------------------- auxiliares
+
+    private static String limpiar(String texto) {
+        return texto == null || texto.isBlank() ? null : texto.trim();
+    }
 
     private void verificarAcceso(Long clienteId) {
         Usuario u = usuarioActual.obtener();

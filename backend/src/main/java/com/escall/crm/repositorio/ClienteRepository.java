@@ -14,6 +14,8 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
 
     Optional<Cliente> findByDocumento(String documento);
 
+    boolean existsByDocumento(String documento);
+
     /** Búsqueda por documento, nombre o número de operación (todas las carteras). */
     @Query("""
             select c from Cliente c

@@ -13,6 +13,8 @@ public interface CuentaRepository extends JpaRepository<Cuenta, Long> {
 
     List<Cuenta> findByClienteIdOrderByNumeroOperacionAsc(Long clienteId);
 
+    boolean existsByClienteId(Long clienteId);
+
     @Query("select distinct c.cartera from Cuenta c order by c.cartera")
     List<String> carteras();
 

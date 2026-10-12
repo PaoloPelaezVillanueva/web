@@ -11,6 +11,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -58,6 +60,17 @@ public class ManejadorErrores {
     @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
     ResponseEntity<ErrorRespuesta> formatoInvalido(Exception e) {
         return responder(HttpStatus.BAD_REQUEST, "El formato de los datos enviados no es válido");
+    }
+
+    /** Falta un archivo o un parámetro obligatorio en la petición (400, no 500). */
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    ResponseEntity<ErrorRespuesta> archivoFaltante(MissingServletRequestPartException e) {
+        return responder(HttpStatus.BAD_REQUEST, "Debes adjuntar el archivo (campo \"" + e.getRequestPartName() + "\")");
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    ResponseEntity<ErrorRespuesta> parametroFaltante(MissingServletRequestParameterException e) {
+        return responder(HttpStatus.BAD_REQUEST, "Falta el dato obligatorio \"" + e.getParameterName() + "\"");
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

@@ -33,6 +33,28 @@ public class ResumenController {
         return clientes.detalle(id);
     }
 
+    /** CRUD - Crear: alta de cliente (solo administrador). */
+    @PostMapping("/clientes")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ClienteDetalleDto crearCliente(@Valid @RequestBody ClienteRequest req) {
+        return clientes.crear(req);
+    }
+
+    /** CRUD - Actualizar: corrige datos de contacto de un cliente que el usuario puede ver. */
+    @PutMapping("/clientes/{id}")
+    public ClienteDetalleDto actualizarCliente(@PathVariable Long id, @Valid @RequestBody ClienteEdicionRequest req) {
+        return clientes.actualizar(id, req);
+    }
+
+    /** CRUD - Eliminar: solo clientes sin cuentas (solo administrador). */
+    @DeleteMapping("/clientes/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('ADMIN')")
+    public void eliminarCliente(@PathVariable Long id) {
+        clientes.eliminar(id);
+    }
+
     /** Árbol de tipificaciones activas para el formulario de gestión. */
     @GetMapping("/tipificaciones")
     public List<TipificacionDto> tipificaciones() {
