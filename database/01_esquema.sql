@@ -1,29 +1,9 @@
 -- =====================================================================
---  CRM WEB PARA LA GESTIÓN DE COBRANZAS - ESCALL PERÚ S.A.C.
---  Esquema de base de datos para MySQL 8
--- ---------------------------------------------------------------------
---  Cómo usarlo (MySQL Workbench):
---    1. Abre tu conexión local (ej: "Local instance MySQL80").
---    2. File -> Open SQL Script... -> elige este archivo.
---    3. Presiona el rayo (Execute) para ejecutar TODO el script.
---
---  Crea la base de datos "crm_cobranzas" y sus tablas. Es seguro
---  ejecutarlo varias veces: no borra nada que ya exista.
---
---  Los usuarios iniciales y el árbol de tipificaciones los crea el
---  backend al arrancar por primera vez (contraseñas cifradas con BCrypt).
+-- CRM WEB PARA LA GESTIÓN DE COBRANZAS - ESCALL PERÚ S.A.C.
+-- Base de datos: ilustroc_universidad
+-- Motor: MariaDB 10.6
 -- =====================================================================
 
-CREATE DATABASE IF NOT EXISTS crm_cobranzas
-    CHARACTER SET utf8mb4
-    COLLATE utf8mb4_0900_ai_ci;
-
-USE crm_cobranzas;
-
--- ---------------------------------------------------------------------
--- 1. USUARIOS: administradores, supervisores y asesores.
---    Un asesor pertenece al equipo de un supervisor (supervisor_id).
--- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS usuarios (
     id              BIGINT       NOT NULL AUTO_INCREMENT,
     usuario         VARCHAR(40)  NOT NULL,
@@ -34,11 +14,16 @@ CREATE TABLE IF NOT EXISTS usuarios (
     supervisor_id   BIGINT,
     activo          BOOLEAN      NOT NULL DEFAULT TRUE,
     creado_en       DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+
     CONSTRAINT pk_usuarios PRIMARY KEY (id),
     CONSTRAINT uk_usuarios_usuario UNIQUE (usuario),
     CONSTRAINT uk_usuarios_email UNIQUE (email),
-    CONSTRAINT fk_usuarios_supervisor FOREIGN KEY (supervisor_id) REFERENCES usuarios (id),
-    CONSTRAINT ck_usuarios_rol CHECK (rol IN ('ADMIN', 'SUPERVISOR', 'ASESOR'))
+    CONSTRAINT fk_usuarios_supervisor
+        FOREIGN KEY (supervisor_id)
+        REFERENCES usuarios (id),
+
+    CONSTRAINT ck_usuarios_rol
+        CHECK (rol IN ('ADMIN', 'SUPERVISOR', 'ASESOR'))
 ) ENGINE = InnoDB;
 
 -- ---------------------------------------------------------------------
@@ -262,5 +247,5 @@ GROUP BY u.id, u.nombre;
 --     ejecuta y usa esos datos en backend/.env
 -- ---------------------------------------------------------------------
 -- CREATE USER IF NOT EXISTS 'crm_app'@'localhost' IDENTIFIED BY 'CambiaEstaClave2026';
--- GRANT SELECT, INSERT, UPDATE, DELETE ON crm_cobranzas.* TO 'crm_app'@'localhost';
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON ilustroc_universidad.* TO 'crm_app'@'localhost';
 -- FLUSH PRIVILEGES;
