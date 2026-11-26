@@ -8,12 +8,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +44,7 @@ public class DatosIniciales implements ApplicationRunner {
     private final PagoRepository pagos;
     private final PasswordEncoder passwordEncoder;
     private final Reloj reloj;
+    private final Environment entorno;
 
     @Value("${app.admin.usuario}")
     private String adminUsuario;
@@ -55,7 +58,12 @@ public class DatosIniciales implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
+        boolean produccion = entorno.matchesProfiles("prod");
         if (usuarios.count() == 0) {
+            int bytes = adminPassword.getBytes(StandardCharsets.UTF_8).length;
+            if (!entorno.matchesProfiles("demo") && (bytes < 16 || bytes > 72 || adminPassword.isBlank())) {
+                throw new IllegalStateException("Define ADMIN_PASSWORD con entre 16 y 72 bytes para crear el primer administrador");
+            }
             usuario(adminUsuario, "Administrador del sistema", Rol.ADMIN, null, adminPassword);
             log.warn("Administrador creado: usuario '{}'. ¡Cambia la contraseña!", adminUsuario);
         }
@@ -63,7 +71,7 @@ public class DatosIniciales implements ApplicationRunner {
             crearArbolTipificaciones();
             log.info("Árbol de tipificaciones base creado");
         }
-        if (datosDemo && clientes.count() == 0) {
+        if (!produccion && datosDemo && clientes.count() == 0) {
             crearDatosDemo();
             log.info("Datos de demostración creados (contraseña de usuarios demo: {})", CLAVE_DEMO);
         }

@@ -2,16 +2,14 @@
 
 Proyecto del curso **Desarrollo Web Integrado** (Grupo 3). Sistema que centraliza la operación de cobranza: búsqueda de clientes y cuentas, registro de gestiones con árbol de tipificaciones, promesas de pago, pagos, dashboard, reportes, administración de usuarios por rol e integración de archivos.
 
-> **Estado actual (Avance 2):** esta entrega incluye el **backend (API REST)** y la **base de datos MySQL**. El frontend Angular se agrega en el Avance 3.
+> Este repositorio contiene el **backend (API REST)** y el esquema de la base de datos. La interfaz Angular no forma parte del repositorio.
 
 | Capa               | Tecnología                                                                              |
 | ------------------ | --------------------------------------------------------------------------------------- |
 | Base de datos      | **MySQL 8**                                                                             |
 | Backend (API REST) | **Java 21 + Spring Boot 4** · Spring Data JPA · Spring Security + JWT · Bean Validation |
 | Frontend           | Angular 21 + Bootstrap 5 — **Avance 3** (no incluido todavía)                           |
-| Pruebas            | JUnit 5 + MockMvc (integración) · colección **Postman**                                 |
-
-Informe y presentación del Avance 2: [`docs/avance-2/`](docs/avance-2/).
+| Pruebas            | JUnit 5 + MockMvc y comprobación del contenedor con MySQL en CI                         |
 
 ---
 
@@ -37,13 +35,13 @@ cd backend
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=demo
 ```
 
-Para probar la API, importa [`docs/CRM-Cobranzas.postman_collection.json`](docs/CRM-Cobranzas.postman_collection.json) en Postman y ejecuta _Login_: el token se guarda solo para las demás peticiones.
+Para probar la API desde un cliente HTTP, inicia sesión en `POST /api/auth/login` con el usuario del modo demo. Envía el token recibido en la cabecera `Authorization: Bearer <token>` de las peticiones protegidas.
 
 ---
 
 ## 🗄️ Conectar con MySQL
 
-1. Abre **MySQL Workbench** → tu conexión local → **File → Open SQL Script…** → [`database/01_esquema.sql`](database/01_esquema.sql) → ⚡ **Execute**. Se crea la base `ilustroc_universidad` con 12 tablas y una vista.
+1. Crea y selecciona una base MySQL llamada `ilustroc_universidad`. Ejecuta [`database/01_esquema.sql`](database/01_esquema.sql) con esa base seleccionada para crear las tablas y la vista.
 2. Copia `backend/.env.example` como `backend/.env` y escribe tu contraseña de MySQL:
    ```properties
    MYSQL_URL=jdbc:mysql://localhost:3306/ilustroc_universidad?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
@@ -61,6 +59,27 @@ La primera vez, el backend crea el **administrador** (contraseña cifrada con BC
 > Para abrir el backend en **NetBeans**: _File → Open Project_ → carpeta `backend` (se reconoce como proyecto Maven).
 
 ---
+
+## Desplegar el backend en producción
+
+1. Crea una base MySQL dedicada y ejecuta [`database/01_esquema.sql`](database/01_esquema.sql) con el usuario encargado del esquema. Para una base ya existente, respáldala y valida el esquema en una copia antes de actualizar. El perfil `prod` valida las tablas al arrancar.
+2. Configura los valores en el gestor de secretos del hosting. Usa una cuenta de aplicación con permisos de lectura y escritura sobre la base, separada de la cuenta que aplica el esquema. Configura TLS para la conexión MySQL según tu proveedor.
+
+   | Variable | Uso |
+   | --- | --- |
+   | `MYSQL_URL`, `MYSQL_USER`, `MYSQL_PASSWORD` | Conexión JDBC y credenciales del usuario de aplicación. |
+   | `JWT_SECRETO` | Clave privada aleatoria de al menos 32 bytes. Por ejemplo, genera una con `openssl rand -hex 32`. |
+   | `ADMIN_PASSWORD` | Contraseña inicial de entre 16 y 72 bytes, necesaria si todavía no hay usuarios. Puedes retirarla del entorno después del primer arranque. |
+   | `ADMIN_USUARIO` | Nombre del administrador inicial. El valor predeterminado es `admin`. |
+   | `CORS_ORIGENES` | Lista opcional de orígenes HTTPS exactos separados por comas. Déjala vacía si no necesitas acceso desde otro origen. |
+   | `PORT` | Puerto HTTP. El valor predeterminado es `8080`. |
+
+3. Construye la imagen desde la raíz con `docker build -t crm-cobranzas backend`. La imagen usa el perfil `prod` y un usuario sin privilegios. Ejecuta una sola réplica durante la creación del administrador inicial. Para usar el JAR en un host con Java 21, inicia con `java -jar backend/target/crm-cobranzas-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod`.
+4. Usa `GET /actuator/health/readiness` para monitorizar la disponibilidad de la base. Publica la API detrás de HTTPS y limita los intentos de inicio de sesión en el proxy. Prueba el acceso con cada rol en un entorno de ensayo antes de cargar datos reales.
+
+El perfil `prod` excluye la consola H2 y los datos demo. Si vienes de un entorno de desarrollo, usa una base nueva o revisa primero los usuarios y datos existentes.
+
+Los tokens duran una hora por defecto. Cerrar sesión registra el evento en auditoría y el cliente debe descartar el token. Un token emitido sigue siendo válido hasta su vencimiento.
 
 ## ✅ Trazabilidad de requisitos
 
@@ -139,8 +158,6 @@ backend/src/main/java/com/escall/crm/
 
 ### Modelo entidad-relación
 
-Diagrama completo en [`docs/avance-2/diagrama-er.png`](docs/avance-2/diagrama-er.png).
-
 ```mermaid
 erDiagram
     USUARIOS ||--o{ USUARIOS : "supervisa"
@@ -189,7 +206,7 @@ erDiagram
 
 ## 📥 Formato de archivos (Integración de Datos)
 
-En Excel: **Guardar como → CSV UTF-8**. Separador `;` o `,`. Hay plantillas en [`docs/`](docs/).
+En Excel: **Guardar como → CSV UTF-8**. Separador `;` o `,`.
 
 - **Asignaciones:** `documento; tipo_documento; nombres; telefono; email; direccion; numero_operacion; entidad; producto; cartera; cosecha; deuda; dias_mora; asesor`
   - Crea o actualiza el cliente (por documento) y la cuenta (por operación). Si la cuenta cambia de asesor, la asignación anterior queda en el historial.
@@ -215,15 +232,9 @@ En Excel: **Guardar como → CSV UTF-8**. Separador `;` o `,`. Hay plantillas en
 
 ```bash
 cd backend
-./mvnw test
+sh ./mvnw verify
 ```
 
 [`CrmCobranzasApplicationTests`](backend/src/test/java/com/escall/crm/CrmCobranzasApplicationTests.java) verifica: login (RF01), permisos por rol (RNF05, RF14), que el asesor solo vea su cartera (RF03–RF04), la gestión con promesa y el pago que la cumple (RF07, RF08, RF20, RF21), la carga de asignaciones con validación (RF19, RF21), que el supervisor solo administre su equipo, con auditoría (RF16, RF23), que las tipificaciones se desactivan sin borrarse (RF22), las reglas del CRUD de clientes y que una carga sin archivo responda 400.
 
-La colección de Postman se corre con newman (34 peticiones, cada una con aserción de código HTTP):
-
-```bash
-npx newman run docs/CRM-Cobranzas.postman_collection.json --env-var base_url=http://localhost:8080 --working-dir docs
-```
-
-El último reporte está en [`docs/avance-2/postman-resultados.txt`](docs/avance-2/postman-resultados.txt).
+[`ProduccionTests`](backend/src/test/java/com/escall/crm/ProduccionTests.java) comprueba el arranque sin datos demo, que la consola H2 quede inaccesible y que CORS acepte solo el origen configurado. GitHub Actions también construye el contenedor y comprueba el inicio de sesión y el estado de disponibilidad con MySQL 8.4.
