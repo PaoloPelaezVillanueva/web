@@ -37,7 +37,7 @@ base="http://$(docker port "$api" 8080/tcp)"
 
 ready=false
 for attempt in {1..45}; do
-  if curl -fsS "$base/actuator/health/readiness" >/dev/null 2>&1; then
+  if curl -fsS --max-time 3 "$base/actuator/health/readiness" >/dev/null 2>&1; then
     ready=true
     break
   fi

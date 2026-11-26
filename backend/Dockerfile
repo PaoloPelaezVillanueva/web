@@ -1,9 +1,8 @@
-FROM eclipse-temurin:21-jdk-jammy AS build
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /src
-COPY .mvn/ .mvn/
-COPY mvnw pom.xml ./
+COPY pom.xml ./
 COPY src/ src/
-RUN sh ./mvnw -B -DskipTests package
+RUN mvn -B -DskipTests package
 
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
