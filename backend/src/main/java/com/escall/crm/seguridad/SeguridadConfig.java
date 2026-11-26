@@ -4,6 +4,7 @@ import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
@@ -25,6 +27,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
@@ -40,18 +43,29 @@ import java.util.List;
 public class SeguridadConfig {
 
     @Bean
-    SecurityFilterChain filtroSeguridad(HttpSecurity http) throws Exception {
+    SecurityFilterChain filtroSeguridad(HttpSecurity http, Environment entorno) throws Exception {
+        if (entorno.matchesProfiles("prod & (demo | mysql)")) {
+            throw new IllegalStateException("Activa prod sin combinarlo con demo o mysql");
+        }
+        boolean demo = entorno.matchesProfiles("demo & !prod");
         http
                 .csrf(csrf -> csrf.disable()) // API sin cookies de sesión: CSRF no aplica
                 .cors(cors -> { })
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .headers(h -> h.frameOptions(f -> f.sameOrigin())) // permite la consola H2 en modo demo
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/auth/login", "/actuator/health", "/h2-console/**", "/error").permitAll()
+                .authorizeHttpRequests(auth -> {
+                    if (demo) {
+                        auth.requestMatchers("/h2-console/**").permitAll();
+                    }
+                    auth.requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/liveness", "/actuator/health/readiness").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/**").authenticated()
-                        .anyRequest().denyAll())
+                        .anyRequest().denyAll();
+                })
                 .oauth2ResourceServer(o -> o.jwt(jwt -> jwt.jwtAuthenticationConverter(convertidorRoles())));
+        if (demo) {
+            http.headers(h -> h.frameOptions(f -> f.sameOrigin()));
+        }
         return http.build();
     }
 
@@ -81,7 +95,9 @@ public class SeguridadConfig {
 
     @Bean
     JwtDecoder jwtDecoder(SecretKey clave) {
-        return NimbusJwtDecoder.withSecretKey(clave).macAlgorithm(MacAlgorithm.HS256).build();
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(clave).macAlgorithm(MacAlgorithm.HS256).build();
+        decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer("crm-cobranzas"));
+        return decoder;
     }
 
     @Bean
@@ -90,9 +106,24 @@ public class SeguridadConfig {
     }
 
     @Bean
-    CorsConfigurationSource corsConfigurationSource(@Value("${app.cors.origenes}") String origenes) {
+    CorsConfigurationSource corsConfigurationSource(@Value("${app.cors.origenes}") String origenes,
+                                                     Environment entorno) {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(Arrays.stream(origenes.split(",")).map(String::trim).toList());
+        List<String> lista = Arrays.stream(origenes.split(",")).map(String::trim)
+                .filter(origen -> !origen.isEmpty()).toList();
+        if (entorno.matchesProfiles("prod")) {
+            for (String origen : lista) {
+                URI uri = URI.create(origen);
+                if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null
+                        || uri.getRawUserInfo() != null || !uri.getRawPath().isEmpty()
+                        || uri.getRawQuery() != null || uri.getRawFragment() != null) {
+                    throw new IllegalStateException("CORS_ORIGENES requiere orígenes HTTPS exactos, sin ruta");
+                }
+            }
+            config.setAllowedOrigins(lista);
+        } else {
+            config.setAllowedOriginPatterns(lista);
+        }
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setMaxAge(3600L);
