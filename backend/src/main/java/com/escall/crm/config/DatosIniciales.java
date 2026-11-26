@@ -61,7 +61,7 @@ public class DatosIniciales implements ApplicationRunner {
         boolean produccion = entorno.matchesProfiles("prod");
         if (usuarios.count() == 0) {
             int bytes = adminPassword.getBytes(StandardCharsets.UTF_8).length;
-            if (produccion && (bytes < 16 || bytes > 72 || adminPassword.isBlank())) {
+            if (!entorno.matchesProfiles("demo") && (bytes < 16 || bytes > 72 || adminPassword.isBlank())) {
                 throw new IllegalStateException("Define ADMIN_PASSWORD con entre 16 y 72 bytes para crear el primer administrador");
             }
             usuario(adminUsuario, "Administrador del sistema", Rol.ADMIN, null, adminPassword);
