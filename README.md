@@ -1,8 +1,14 @@
-# 📞 CRM Web para la Gestión de Cobranzas — ESCALL PERÚ S.A.C.
+# CRM de cobranzas | API REST
 
 Proyecto del curso **Desarrollo Web Integrado** (Grupo 3). Sistema que centraliza la operación de cobranza: búsqueda de clientes y cuentas, registro de gestiones con árbol de tipificaciones, promesas de pago, pagos, dashboard, reportes, administración de usuarios por rol e integración de archivos.
 
 > Este repositorio contiene el **backend (API REST)** y el esquema de la base de datos. La interfaz Angular no forma parte del repositorio.
+
+**Ruta rápida de evaluación:** [ejecutar la demo local](#-probarlo-en-1-minuto-sin-mysql) o revisar la [verificación del contenedor con MySQL 8.4](https://github.com/PaoloPelaezVillanueva/web/actions/runs/45904303890).
+
+## Aporte identificable
+
+El CRM es un proyecto académico del Grupo 3. La [preparación del backend para producción](https://github.com/PaoloPelaezVillanueva/web/pull/1) está documentada en un PR separado. Ahí se pueden revisar el perfil `prod`, la imagen Docker, las pruebas del perfil y la verificación de arranque y autenticación con MySQL.
 
 | Capa               | Tecnología                                                                              |
 | ------------------ | --------------------------------------------------------------------------------------- |
@@ -36,6 +42,15 @@ cd backend
 ```
 
 Para probar la API desde un cliente HTTP, inicia sesión en `POST /api/auth/login` con el usuario del modo demo. Envía el token recibido en la cabecera `Authorization: Bearer <token>` de las peticiones protegidas.
+
+Por ejemplo, en la demo local, inicia sesión con el asesor de prueba y comprueba qué clientes aparecen en su cartera:
+
+```bash
+curl -sS http://localhost:8080/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"usuario":"asesor1","password":"Clave12345"}'
+curl -sS 'http://localhost:8080/api/clientes' -H 'Authorization: Bearer <token>'
+```
 
 ---
 
